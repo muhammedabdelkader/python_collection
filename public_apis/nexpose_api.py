@@ -1,17 +1,20 @@
 import cgi
 import csv
 import json
-import requests
-from requests.auth import HTTPBasicAuth
-from io import StringIO
 import logging
+from io import StringIO
+
+import requests
 from joblib import Parallel, delayed
+from requests.auth import HTTPBasicAuth
 from utils.processors.details import details_processor
 from utils.processors.overview import overview_processor
 
+__version__ = "0.1"
+
 
 class NexposeConnection(object):
-    def __init__(self, nxserver, user, password,config):
+    def __init__(self, nxserver, user, password, config):
         logging.info("Nexpose: Parameter Initializing ")
         self.config = config
         self.nxserver = nxserver
@@ -45,7 +48,6 @@ class NexposeConnection(object):
         )
         assert response.status_code == 200
         return response
-
 
     def _get_vulndata(self, report_id, headermap=None):
         r = self.api_session.get(
@@ -89,9 +91,9 @@ class NexposeConnection(object):
         )
 
     def qlik_sense_report(self, args_local=False):
-        coverage_by_site={}
-        status_list =[
-            'Successful','Aborted', 'Unknown', 'Running', 'Finished',
+        coverage_by_site = {}
+        status_list = [
+            'Successful', 'Aborted', 'Unknown', 'Running', 'Finished',
             'Stopped', 'Error', 'Paused', 'Dispatched', 'Integrating'
         ]
 
@@ -102,7 +104,7 @@ class NexposeConnection(object):
             scancoverage = self._get_vulndata(
                 report_id=self.config['nexpose']['reports']['scanCoverageITGov_overview'])
             overview_results = [dict(item) for item in scancoverage]
-            with open("scans_coverage_overview.json","w") as f:
+            with open("scans_coverage_overview.json", "w") as f:
                 f.write(json.dumps(overview_results))
             scancoverage = self._get_vulndata(
                 report_id=self.config['nexpose']['reports']['scanCoverageITGov_detailed'])
@@ -161,7 +163,7 @@ class NexposeConnection(object):
 
             assets = []
             for i in range(0, res['page']['totalPages']):
-                logging.info("\rPage %s/%s" % (i+1, res['page']['totalPages']))
+                logging.info("\rPage %s/%s" % (i + 1, res['page']['totalPages']))
                 r = self.api_session.post('%s/assets/search?size=500&page=%s' % (self.nxapiroot, i), json={"filters": [
                     {"field": "last-scan-date", "operator": "is-within-the-last", "value": 10}], "match": "all"})
                 nxres = r.json()
@@ -194,7 +196,7 @@ class NexposeConnection(object):
 
         containers = []
         if response.status_code == 200:
-			#print(response.text)
+            # print(response.text)
             print(response.text)
             for container in response.json()['records']:
                 containers.append({'ip': asset['ip'],
@@ -209,7 +211,7 @@ class NexposeConnection(object):
 
             return containers
 
-    def get_containers(self,args_local=False):
+    def get_containers(self, args_local=False):
         if args_local:
             with open('containers.json') as f:
                 containers = json.load(f)
